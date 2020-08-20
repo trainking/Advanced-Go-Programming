@@ -74,7 +74,7 @@ func (c *Cache) Set(key string, val interface{}, expire time.Duration) {
 	defer c.mu.Unlock()
 	// 超过最大内存
 	if int64(unsafe.Sizeof(*c)) + int64(unsafe.Sizeof(_item)) > c.max {
-		return
+		panic("cache is full!")
 	}
 	c.items[key] = _item
 }
