@@ -1,33 +1,40 @@
 package main
 
 import (
-	"sync"
+	"net/rpc"
 	"fmt"
+	"time"
+	"log"
 )
 
-type KVStoreService struct {
-	m   map[string]string
-	filter map[string]func(key string)
-	mu sync.Mutex
+const WatchServiceName = "/path/to/WatchService"
+
+func doClientWork(client *rpc.Client)  {
+	go func ()  {
+		var keyChanged string
+		err := client.Call(WatchServiceName + ".Watch", 30, &keyChanged)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println("watch:", keyChanged)
+	} ()
+
+	err := client.Call(
+		WatchServiceName + ".Set", [2]string{"abc", "abc-value"},
+		new(struct{}),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	time.Sleep(time.Second * 3)
 }
 
-func (p *KVStoreService) Get(key string, value *string) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	if v, ok := p.m[key]; ok {
-		*value = v
-		return nil
-	}
-	return fmt.Errorf("not found")
-}
-
-func NewKVStoreService() *KVStoreService {
-	return &KVStoreService{
-		m: make(map[string]string),
-		filter: make(map[string]func(key string))
-	}
-}
 
 func main() {
-	
+	client, err := rpc.Dial("tcp", ":1234")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	doClientWork(client)
 }
