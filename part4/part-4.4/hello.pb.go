@@ -232,3 +232,21 @@ var _HelloService_serviceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "hello.proto",
 }
+
+type HelloServiceImpl struct{}
+func (p *HelloServiceImpl) Hello(
+	ctx context.Context, args *String,
+) (*String, error) {
+	reply := &String{Value: "Hello:" + args.GetValue()}
+	return reply, nil
+}
+
+func main()  {
+	grpcServer := grpc.NewServer()
+	RegisterHelloServiceServer(grpcServer, new(HelloServiceImpl))
+	list, err := net.Listen("tcp", ":1234")
+	if err != nil {
+		log.Fatal(err)
+	}
+	grpcServer.Serve(list)
+}
